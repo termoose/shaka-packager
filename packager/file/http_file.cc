@@ -316,11 +316,14 @@ void HttpFile::SetupRequestData(const std::string& data) {
   // Build list of HTTP request headers.
   struct curl_slist* headers = nullptr;
 
+  std::string content_length = std::to_string(data.siz());
+
   //headers = curl_slist_append(headers, "Content-Type: application/octet-stream");
   headers = curl_slist_append(headers, "Transfer-Encoding: chunked");
+  headers = curl_slist_append(headers, "Content-Length: " + content_length);
 
   // Don't stop on 200 OK responses.
-  headers = curl_slist_append(headers, "Expect:");
+  //headers = curl_slist_append(headers, "Expect:");
 
   // Enable progressive upload with chunked transfer encoding.
   curl_easy_setopt(curl_, CURLOPT_READFUNCTION, read_callback);
