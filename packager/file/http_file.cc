@@ -320,7 +320,9 @@ void HttpFile::SetupRequestData(const std::string& data) {
 
   //headers = curl_slist_append(headers, "Content-Type: application/octet-stream");
   headers = curl_slist_append(headers, "Transfer-Encoding: chunked");
-  headers = curl_slist_append(headers, ("Content-Length: " + content_length).c_str());
+  headers = curl_slist_append(headers, "Connection: keep-alive");
+  headers = curl_slist_append(headers, "Icy-Metadata: 1");
+  //headers = curl_slist_append(headers, ("Content-Length: " + content_length).c_str());
 
   // Don't stop on 200 OK responses.
   headers = curl_slist_append(headers, "Expect:");
@@ -329,6 +331,7 @@ void HttpFile::SetupRequestData(const std::string& data) {
   curl_easy_setopt(curl_, CURLOPT_READFUNCTION, read_callback);
   curl_easy_setopt(curl_, CURLOPT_READDATA, &cache_);
   curl_easy_setopt(curl_, CURLOPT_UPLOAD, 1L);
+  curl_easy_setopt(curl_, CURLOPT_POSTFIELDS, data.c_str());
 
   // Add HTTP request headers.
   curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, headers);
