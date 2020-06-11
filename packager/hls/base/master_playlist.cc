@@ -30,8 +30,8 @@ void AppendVersionString(std::string* content) {
   const std::string version = GetPackagerVersion();
   if (version.empty())
     return;
-  base::StringAppendF(content, "## Generated with %s version %s\n",
-                      GetPackagerProjectUrl().c_str(), version.c_str());
+  //  base::StringAppendF(content, "## Generated with %s version %s\n",
+  //                      GetPackagerProjectUrl().c_str(), version.c_str());
 }
 
 // This structure roughly maps to the Variant stream in HLS specification.

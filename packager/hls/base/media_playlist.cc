@@ -87,11 +87,11 @@ std::string CreatePlaylistHeader(
     int discontinuity_sequence_number) {
   const std::string version = GetPackagerVersion();
   std::string version_line;
-  if (!version.empty()) {
-    version_line =
-        base::StringPrintf("## Generated with %s version %s\n",
-                           GetPackagerProjectUrl().c_str(), version.c_str());
-  }
+  // if (!version.empty()) {
+  //   version_line =
+  //       base::StringPrintf("## Generated with %s version %s\n",
+  //                          GetPackagerProjectUrl().c_str(), version.c_str());
+  // }
 
   // 6 is required for EXT-X-MAP without EXT-X-I-FRAMES-ONLY.
   std::string header = base::StringPrintf(
