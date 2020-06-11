@@ -320,7 +320,7 @@ void HttpFile::SetupRequestData(const std::string& data) {
 
   //headers = curl_slist_append(headers, "Content-Type: application/octet-stream");
   headers = curl_slist_append(headers, "Transfer-Encoding: chunked");
-  headers = curl_slist_append(headers, "Content-Length: " + content_length);
+  headers = curl_slist_append(headers, ("Content-Length: " + content_length).c_str());
 
   // Don't stop on 200 OK responses.
   //headers = curl_slist_append(headers, "Expect:");
