@@ -323,7 +323,7 @@ void HttpFile::SetupRequestData(const std::string& data) {
   headers = curl_slist_append(headers, ("Content-Length: " + content_length).c_str());
 
   // Don't stop on 200 OK responses.
-  //headers = curl_slist_append(headers, "Expect:");
+  headers = curl_slist_append(headers, "Expect:");
 
   // Enable progressive upload with chunked transfer encoding.
   curl_easy_setopt(curl_, CURLOPT_READFUNCTION, read_callback);
