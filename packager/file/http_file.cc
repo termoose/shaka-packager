@@ -316,7 +316,7 @@ void HttpFile::SetupRequestData(const std::string& data) {
   // Build list of HTTP request headers.
   struct curl_slist* headers = nullptr;
 
-  std::string content_length = std::to_string(data.siz());
+  std::string content_length = std::to_string(data.size());
 
   //headers = curl_slist_append(headers, "Content-Type: application/octet-stream");
   headers = curl_slist_append(headers, "Transfer-Encoding: chunked");
