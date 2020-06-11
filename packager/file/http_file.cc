@@ -331,7 +331,7 @@ void HttpFile::SetupRequestData(const std::string& data) {
   curl_easy_setopt(curl_, CURLOPT_READFUNCTION, read_callback);
   curl_easy_setopt(curl_, CURLOPT_READDATA, &cache_);
   curl_easy_setopt(curl_, CURLOPT_UPLOAD, 1L);
-  curl_easy_setopt(curl_, CURLOPT_POSTFIELDS, data.c_str());
+  //curl_easy_setopt(curl_, CURLOPT_POSTFIELDS, data.c_str());
 
   // Add HTTP request headers.
   curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, headers);
