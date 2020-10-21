@@ -11,6 +11,7 @@
 #include "packager/base/files/file_util.h"
 #include "packager/base/logging.h"
 #include "packager/base/strings/string_number_conversions.h"
+#include "packager/base/strings/string_split.h"
 #include "packager/base/strings/stringprintf.h"
 #include "packager/base/synchronization/lock.h"
 #include "packager/base/threading/worker_pool.h"
@@ -28,6 +29,11 @@ DEFINE_string(https_cert_private_key_file, "",
               "Absolute path to the private Key file.");
 DEFINE_string(https_cert_private_key_password, "",
               "Password to the private key file.");
+DEFINE_string(http_upload_headers, "",
+              "HTTP upload headers, as a newline-separated list of HTTP "
+              "headers in \"KEY: VALUE\" format.  For example, to authenticate "
+              "to Google Cloud, use something like "
+              "--http_upload_headers \"Authorization: Bearer AUTH_TOKEN\"");
 DECLARE_uint64(io_cache_size);
 
 namespace shaka {
@@ -55,6 +61,7 @@ HttpFile::HttpFile(const char* file_name, const char* mode, bool https)
     : File(file_name),
       file_mode_(mode),
       user_agent_(FLAGS_user_agent),
+      user_headers_(FLAGS_http_upload_headers),
       ca_file_(FLAGS_https_ca_file),
       cert_file_(FLAGS_https_cert_file),
       cert_private_key_file_(FLAGS_https_cert_private_key_file),
@@ -321,6 +328,13 @@ void HttpFile::SetupRequestData(const std::string& data) {
 
   // Don't stop on 200 OK responses.
   headers = curl_slist_append(headers, "Expect:");
+
+  // Add any user-specified request headers.
+  std::vector<std::string> user_headers = base::SplitString(
+      user_headers_, "\n", base::KEEP_WHITESPACE, base::SPLIT_WANT_NONEMPTY);
+  for (size_t i = 0; i < user_headers.size(); ++i) {
+    headers = curl_slist_append(headers, user_headers[i].c_str());
+  }
 
   // Enable progressive upload with chunked transfer encoding.
   curl_easy_setopt(curl_, CURLOPT_READFUNCTION, read_callback);

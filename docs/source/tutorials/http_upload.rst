@@ -115,7 +115,16 @@ we should also check DASH_.
 
 Basic Auth
 ==========
-There's no support for authentication yet.
+You can send authentication headers or any other HTTP request headers using
+``--http_upload_headers``.  Headers take the form of ``HEADER: VALUE``, and
+multiple such headers should be separated by newlines (which can't appear in
+HTTP header values).
+
+For example, if your OAuth token is ``AUTH_TOKEN``, you could authenticate to
+Google Cloud Storage with:
+
+``--http_upload_headers \"Authorization: Bearer AUTH_TOKEN\""``
+
 
 HTTPS
 =====
@@ -124,7 +133,7 @@ HTTPS is currently not supported yet.
 
 HTTP DELETE
 ===========
-Nothing has be done to support this yet:
+Nothing has been done to support this yet:
 
     Packager supports removing old segments automatically.
     See ``preserved_segments_outside_live_window`` option in

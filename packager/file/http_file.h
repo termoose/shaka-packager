@@ -128,6 +128,7 @@ class HttpFile : public File {
   const char* file_mode_;
   std::string resource_url_;
   std::string user_agent_;
+  std::string user_headers_;
   std::string ca_file_;
   std::string cert_file_;
   std::string cert_private_key_file_;
