@@ -326,7 +326,8 @@ void HttpFile::SetupRequestData(const std::string& data) {
   headers = curl_slist_append(headers, "Content-Type: application/octet-stream");
   headers = curl_slist_append(headers, "Transfer-Encoding: chunked");
 
-  // Don't stop on 200 OK responses.
+  // Don't send the "Expect" header, and therefore don't stop on 200 OK
+  // responses.  Expect is widely ignored by servers.
   headers = curl_slist_append(headers, "Expect:");
 
   // Add any user-specified request headers.
