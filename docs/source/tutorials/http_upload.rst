@@ -143,10 +143,10 @@ Network timeouts
 libcurl_ can apply network timeout settings. However,
 we haven't addressed this yet.
 
-Miscellaneous
-=============
-- Address all things TODO and FIXME
-- Make ``io_cache_size`` configurable?
+TODO
+====
+- Upload chunks as they are ready instead of buffering whole segments in IOCache
+- Document AWS usage
 
 
 *******
@@ -215,6 +215,25 @@ Run Caddy::
     caddy -conf Caddyfile
 
 
+HTTP PUT file uploads to Google Cloud Storage
+=============================================
+Create an OAuth 2.0 token with access to Google Cloud Storage.  For testing
+purposes, you can use Google's `OAuth Playground`_ to generate a token with
+access to the ``https://www.googleapis.com/auth/devstorage.read_write`` API
+scope.
+
+Then add the Packager argument::
+
+    --http_upload_headers "Authorization: Bearer AUTH_TOKEN"
+
+Where ``AUTH_TOKEN`` is your OAuth 2.0 token for GCS.
+
+Finally, to upload to a bucket named BUCKET_NAME and a folder called
+FOLDER_PATH, use the URL
+``https://BUCKET_NAME.storage.googleapis.com/FOLDER_PATH`` as the base for
+Packager's outputs.
+
+
 *************************
 Development and debugging
 *************************
@@ -248,6 +267,7 @@ Have fun!
 .. _ngx_http_dav_module: http://nginx.org/en/docs/http/ngx_http_dav_module.html
 .. _Caddy: https://caddyserver.com/
 .. _httpd-reflector.py: https://gist.github.com/amotl/3ed38e461af743aeeade5a5a106c1296
+.. _OAuth Playground: https://developers.google.com/oauthplayground/
 
 .. _@colleenkhenry: https://github.com/colleenkhenry
 .. _@kqyang: https://github.com/kqyang
