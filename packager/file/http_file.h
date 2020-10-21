@@ -89,6 +89,10 @@ class HttpFile : public File {
   bool Tell(uint64_t* position) override;
   /// @}
 
+  bool Delete();
+
+  static bool Delete(const char* file_name, bool https);
+
   /// @return The full resource url
   const std::string& resource_url() const { return resource_url_; }
 
@@ -104,21 +108,18 @@ class HttpFile : public File {
     POST,
     PUT,
     PATCH,
+    DELETE,
   };
 
   HttpFile(const HttpFile&) = delete;
   HttpFile& operator=(const HttpFile&) = delete;
 
   // Internal implementation of HTTP functions, e.g. Get and Post.
-  Status Request(HttpMethod http_method,
-                 const std::string& url,
-                 std::string* response);
+  Status Request(HttpMethod http_method, std::string* response);
 
-  void SetupRequestBase(HttpMethod http_method,
-                        const std::string& url,
-                        std::string* response);
+  void SetupRequestBase(HttpMethod http_method, std::string* response);
 
-  void SetupRequestData();
+  void SetupRequestData(HttpMethod http_method);
 
   void CurlPut();
 

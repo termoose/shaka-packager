@@ -95,8 +95,8 @@ HttpFile::HttpFile(const char* file_name, const char* mode)
 HttpFile::~HttpFile() {}
 
 bool HttpFile::Open() {
-
-  VLOG(1) << "Opening " << resource_url() << " with file mode \"" << file_mode_ << "\".";
+  VLOG(1) << "Opening " << resource_url_ <<
+             " with file mode \"" << file_mode_ << "\".";
 
   // Ignore read requests as they would truncate the target
   // file by propagating as zero-length PUT requests.
@@ -118,11 +118,11 @@ bool HttpFile::Open() {
 
 void HttpFile::CurlPut() {
   // Setup libcurl handle with HTTP PUT upload transfer mode.
-  Request(PUT, resource_url(), &response_body_);
+  Request(PUT, &response_body_);
 }
 
 bool HttpFile::Close() {
-  VLOG(1) << "Closing " << resource_url() << ".";
+  VLOG(1) << "Closing " << resource_url_ << ".";
   cache_.Close();
   task_exit_event_.Wait();
   delete this;
@@ -135,33 +135,13 @@ int64_t HttpFile::Read(void* buffer, uint64_t length) {
 }
 
 int64_t HttpFile::Write(const void* buffer, uint64_t length) {
-  std::string url = resource_url();
-
-  VLOG(2) << "Writing to " << url << ", length=" << length;
+  VLOG(2) << "Writing to " << resource_url_ << ", length=" << length;
 
   // TODO: Implement retrying with exponential backoff, see
   // "widevine_key_source.cc"
-  Status status;
-
   uint64_t bytes_written = cache_.Write(buffer, length);
   VLOG(3) << "PUT CHUNK bytes_written: " << bytes_written;
   return bytes_written;
-
-  // Debugging based on response status
-  /*
-  if (status.ok()) {
-    VLOG(1) << "Writing chunk succeeded";
-
-  } else {
-    VLOG(1) << "Writing chunk failed";
-    if (!response_body.empty()) {
-      VLOG(2) << "Response:\n" << response_body;
-    }
-  }
-  */
-
-  // Always signal success to the downstream pipeline
-  return length;
 }
 
 int64_t HttpFile::Size() {
@@ -184,21 +164,28 @@ bool HttpFile::Tell(uint64_t* position) {
   return false;
 }
 
+bool HttpFile::Delete() {
+  VLOG(2) << "Deleting " << resource_url_;
+  Status status = Request(DELETE, &response_body_);
+  return status == Status::OK;
+}
+
+// static
+bool HttpFile::Delete(const char* file_name, bool https) {
+  HttpFile file(file_name, "w", https);
+  return file.Delete();
+}
+
 // Perform HTTP request
 Status HttpFile::Request(HttpMethod http_method,
-                         const std::string& url,
                          std::string* response) {
-
-  // TODO: Sanity checks.
-  // DCHECK(http_method == GET || http_method == POST);
-
-  VLOG(1) << "Sending request to URL " << url;
+  VLOG(1) << "Sending request to URL " << resource_url_;
 
   // Setup HTTP method and libcurl options
-  SetupRequestBase(http_method, url, response);
+  SetupRequestBase(http_method, response);
 
   // Setup HTTP request headers and body
-  SetupRequestData();
+  SetupRequestData(http_method);
 
   // Perform HTTP request
   CURLcode res = curl_easy_perform(curl_);
@@ -211,7 +198,7 @@ Status HttpFile::Request(HttpMethod http_method,
     std::string method_text = method_as_text(http_method);
     std::string error_message = base::StringPrintf(
         "%s request for %s failed. Reason: %s.", method_text.c_str(),
-        url.c_str(), curl_easy_strerror(res));
+        resource_url_.c_str(), curl_easy_strerror(res));
     if (res == CURLE_HTTP_RETURNED_ERROR) {
       long response_code = 0;
       curl_easy_getinfo(curl_, CURLINFO_RESPONSE_CODE, &response_code);
@@ -236,9 +223,7 @@ Status HttpFile::Request(HttpMethod http_method,
 }
 
 // Configure curl_ handle with reasonable defaults
-void HttpFile::SetupRequestBase(HttpMethod http_method,
-                                const std::string& url,
-                                std::string* response) {
+void HttpFile::SetupRequestBase(HttpMethod http_method, std::string* response) {
   response->clear();
 
   // Configure HTTP request method/verb
@@ -255,10 +240,13 @@ void HttpFile::SetupRequestBase(HttpMethod http_method,
     case PATCH:
       curl_easy_setopt(curl_, CURLOPT_CUSTOMREQUEST, "PATCH");
       break;
+    case DELETE:
+      curl_easy_setopt(curl_, CURLOPT_CUSTOMREQUEST, "DELETE");
+      break;
   }
 
   // Configure HTTP request
-  curl_easy_setopt(curl_, CURLOPT_URL, url.c_str());
+  curl_easy_setopt(curl_, CURLOPT_URL, resource_url_.c_str());
 
   if (user_agent_.empty()) {
     curl_easy_setopt(curl_, CURLOPT_USERAGENT, kUserAgentString);
@@ -313,16 +301,9 @@ size_t read_callback(char* buffer, size_t size, size_t nitems, void* stream) {
 }
 
 // Configure curl_ handle for HTTP PUT upload
-void HttpFile::SetupRequestData() {
-
-  // TODO: Sanity checks.
-  // if (method == POST || method == PUT || method == PATCH)
-
+void HttpFile::SetupRequestData(HttpMethod http_method) {
   // Build list of HTTP request headers.
   struct curl_slist* headers = nullptr;
-
-  headers = curl_slist_append(headers, "Content-Type: application/octet-stream");
-  headers = curl_slist_append(headers, "Transfer-Encoding: chunked");
 
   // Don't send the "Expect" header, and therefore don't stop on 200 OK
   // responses.  Expect is widely ignored by servers.
@@ -335,10 +316,24 @@ void HttpFile::SetupRequestData() {
     headers = curl_slist_append(headers, user_headers[i].c_str());
   }
 
-  // Enable progressive upload with chunked transfer encoding.
-  curl_easy_setopt(curl_, CURLOPT_READFUNCTION, read_callback);
-  curl_easy_setopt(curl_, CURLOPT_READDATA, &cache_);
-  curl_easy_setopt(curl_, CURLOPT_UPLOAD, 1L);
+  switch (http_method) {
+    case POST:
+    case PUT:
+    case PATCH:
+      // For methods that transfer data, set appropriate headers.
+      headers = curl_slist_append(headers,
+          "Content-Type: application/octet-stream");
+      headers = curl_slist_append(headers, "Transfer-Encoding: chunked");
+
+      // Enable progressive upload with chunked transfer encoding.
+      curl_easy_setopt(curl_, CURLOPT_READFUNCTION, read_callback);
+      curl_easy_setopt(curl_, CURLOPT_READDATA, &cache_);
+      curl_easy_setopt(curl_, CURLOPT_UPLOAD, 1L);
+      break;
+
+    default:
+      break;
+  }
 
   // Add HTTP request headers.
   curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, headers);
@@ -359,6 +354,9 @@ std::string HttpFile::method_as_text(HttpMethod method) {
       break;
     case PATCH:
       method_text = "PATCH";
+      break;
+    case DELETE:
+      method_text = "DELETE";
       break;
   }
   return method_text;

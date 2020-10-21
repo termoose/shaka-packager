@@ -103,8 +103,16 @@ File* CreateHttpsFile(const char* file_name, const char* mode) {
   return new HttpFile(file_name, mode, true);
 }
 
+bool DeleteHttpsFile(const char* file_name) {
+  return HttpFile::Delete(file_name, true);
+}
+
 File* CreateHttpFile(const char* file_name, const char* mode) {
   return new HttpFile(file_name, mode, false);
+}
+
+bool DeleteHttpFile(const char* file_name) {
+  return HttpFile::Delete(file_name, false);
 }
 
 File* CreateMemoryFile(const char* file_name, const char* mode) {
@@ -126,8 +134,8 @@ static const FileTypeInfo kFileTypeInfo[] = {
     {kUdpFilePrefix, &CreateUdpFile, nullptr, nullptr},
     {kMemoryFilePrefix, &CreateMemoryFile, &DeleteMemoryFile, nullptr},
     {kCallbackFilePrefix, &CreateCallbackFile, nullptr, nullptr},
-    {kHttpFilePrefix, &CreateHttpFile, nullptr, nullptr},
-    {kHttpsFilePrefix, &CreateHttpsFile, nullptr, nullptr},
+    {kHttpFilePrefix, &CreateHttpFile, &DeleteHttpFile, nullptr},
+    {kHttpsFilePrefix, &CreateHttpsFile, &DeleteHttpsFile, nullptr},
 };
 
 base::StringPiece GetFileTypePrefix(base::StringPiece file_name) {

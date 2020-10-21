@@ -125,19 +125,13 @@ Google Cloud Storage with:
 
 ``--http_upload_headers \"Authorization: Bearer AUTH_TOKEN\""``
 
-
-HTTPS
-=====
-While there's already some code in place,
-HTTPS is currently not supported yet.
-
 HTTP DELETE
 ===========
-Nothing has been done to support this yet:
+Packager supports removing old segments automatically.  (See
+``preserved_segments_outside_live_window`` option in DASH_ options or HLS_
+options for details.)
 
-    Packager supports removing old segments automatically.
-    See ``preserved_segments_outside_live_window`` option in
-    DASH_ options or HLS_ options for details.
+With HTTP paths, this will be done using HTTP DELETE.
 
 Software tests
 ==============
