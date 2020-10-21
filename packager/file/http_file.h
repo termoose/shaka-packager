@@ -112,14 +112,13 @@ class HttpFile : public File {
   // Internal implementation of HTTP functions, e.g. Get and Post.
   Status Request(HttpMethod http_method,
                  const std::string& url,
-                 const std::string& data,
                  std::string* response);
 
   void SetupRequestBase(HttpMethod http_method,
                         const std::string& url,
                         std::string* response);
 
-  void SetupRequestData(const std::string& data);
+  void SetupRequestData();
 
   void CurlPut();
 

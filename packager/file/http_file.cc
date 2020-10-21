@@ -118,8 +118,7 @@ bool HttpFile::Open() {
 
 void HttpFile::CurlPut() {
   // Setup libcurl handle with HTTP PUT upload transfer mode.
-  std::string request_body;
-  Request(PUT, resource_url(), request_body, &response_body_);
+  Request(PUT, resource_url(), &response_body_);
 }
 
 bool HttpFile::Close() {
@@ -188,7 +187,6 @@ bool HttpFile::Tell(uint64_t* position) {
 // Perform HTTP request
 Status HttpFile::Request(HttpMethod http_method,
                          const std::string& url,
-                         const std::string& data,
                          std::string* response) {
 
   // TODO: Sanity checks.
@@ -200,7 +198,7 @@ Status HttpFile::Request(HttpMethod http_method,
   SetupRequestBase(http_method, url, response);
 
   // Setup HTTP request headers and body
-  SetupRequestData(data);
+  SetupRequestData();
 
   // Perform HTTP request
   CURLcode res = curl_easy_perform(curl_);
@@ -315,7 +313,7 @@ size_t read_callback(char* buffer, size_t size, size_t nitems, void* stream) {
 }
 
 // Configure curl_ handle for HTTP PUT upload
-void HttpFile::SetupRequestData(const std::string& data) {
+void HttpFile::SetupRequestData() {
 
   // TODO: Sanity checks.
   // if (method == POST || method == PUT || method == PATCH)
