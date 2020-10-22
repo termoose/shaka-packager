@@ -54,6 +54,20 @@ size_t AppendToString(char* ptr,
   return total_size;
 }
 
+std::string extension_to_content_type(const std::string& extension) {
+  if (extension == "mp4") {
+    return "video/mp4";
+  } else if (extension == "webm") {
+    return "video/webm";
+  } else if (extension == "vtt") {
+    return "text/vtt";
+  } else if (extension == "ttml") {
+    return "text/ttml";
+  } else {
+    return "application/octet-stream";
+  }
+}
+
 }  // namespace
 
 /// Create a HTTP/HTTPS client
@@ -319,10 +333,18 @@ void HttpFile::SetupRequestData(HttpMethod http_method) {
   switch (http_method) {
     case POST:
     case PUT:
-    case PATCH:
+    case PATCH: {
       // For methods that transfer data, set appropriate headers.
-      headers = curl_slist_append(headers,
-          "Content-Type: application/octet-stream");
+
+      // Guess the correct Content-Type based on the file extension.
+      std::string extension = base::SplitString(
+          resource_url_, ".", base::KEEP_WHITESPACE,
+          base::SPLIT_WANT_ALL).back();
+      std::string content_type = extension_to_content_type(extension);
+      std::string content_type_header = "Content-Type: " + content_type;
+      headers = curl_slist_append(headers, content_type_header.c_str());
+
+      // Ensure chunked transfer.
       headers = curl_slist_append(headers, "Transfer-Encoding: chunked");
 
       // Enable progressive upload with chunked transfer encoding.
@@ -330,6 +352,7 @@ void HttpFile::SetupRequestData(HttpMethod http_method) {
       curl_easy_setopt(curl_, CURLOPT_READDATA, &cache_);
       curl_easy_setopt(curl_, CURLOPT_UPLOAD, 1L);
       break;
+    }
 
     default:
       break;

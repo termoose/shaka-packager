@@ -54,8 +54,9 @@ with appropriate URLs where the HTTP PUT requests will be issued to.
 You can also supply the ``--user_agent`` flag to specify a custom
 User-Agent string for all HTTP PUT requests.
 
-For pragmatic reasons, all HTTP requests will be declared as
-``Content-Type: application/octet-stream``.
+Content types for mp4, webm, vtt, and ttml files will be set in the HTTP upload.
+Other extensions will be declared as type ``application/octet-stream`` in the
+HTTP request.
 
 Synopsis
 ========
