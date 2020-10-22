@@ -228,6 +228,14 @@ Then add the Packager argument::
 
 Where ``AUTH_TOKEN`` is your OAuth 2.0 token for GCS.
 
+For live streams, you should also disable caching so that GCS does not serve a
+stale manifest.  For this, change the argument to::
+
+    --http_upload_headers "Authorization: Bearer AUTH_TOKEN\nCache-Control: no-store, no-transform"
+
+Where ``AUTH_TOKEN`` is your OAuth 2.0 token for GCS and ``\n`` is a literal
+newline.
+
 Finally, to upload to a bucket named BUCKET_NAME and a folder called
 FOLDER_PATH, use the URL
 ``https://BUCKET_NAME.storage.googleapis.com/FOLDER_PATH`` as the base for
