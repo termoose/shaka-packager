@@ -221,6 +221,13 @@ Status HttpFile::Request(HttpMethod http_method,
     status = Status(
         res == CURLE_OPERATION_TIMEDOUT ? error::TIME_OUT : error::HTTP_FAILURE,
         error_message);
+  } else {
+    // Actually not an error message, but we use it for monitoring gateway
+    // status in vt-handler.
+    std::string ok_message = base::StringPrintf(
+        "%s request for %s succeeded.", method_text.c_str(),
+        url.c_str());
+    LOG(ERROR) << ok_message;
   }
 
   // Signal task completion
