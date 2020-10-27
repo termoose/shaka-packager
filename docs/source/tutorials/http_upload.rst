@@ -54,8 +54,9 @@ with appropriate URLs where the HTTP PUT requests will be issued to.
 You can also supply the ``--user_agent`` flag to specify a custom
 User-Agent string for all HTTP PUT requests.
 
-For pragmatic reasons, all HTTP requests will be declared as
-``Content-Type: application/octet-stream``.
+Content types for mp4, webm, vtt, and ttml files will be set in the HTTP upload.
+Other extensions will be declared as type ``application/octet-stream`` in the
+HTTP request.
 
 Synopsis
 ========
@@ -115,20 +116,23 @@ we should also check DASH_.
 
 Basic Auth
 ==========
-There's no support for authentication yet.
+You can send authentication headers or any other HTTP request headers using
+``--http_upload_headers``.  Headers take the form of ``HEADER: VALUE``, and
+multiple such headers should be separated by newlines (which can't appear in
+HTTP header values).
 
-HTTPS
-=====
-While there's already some code in place,
-HTTPS is currently not supported yet.
+For example, if your OAuth token is ``AUTH_TOKEN``, you could authenticate to
+Google Cloud Storage with:
+
+``--http_upload_headers \"Authorization: Bearer AUTH_TOKEN\""``
 
 HTTP DELETE
 ===========
-Nothing has be done to support this yet:
+Packager supports removing old segments automatically.  (See
+``preserved_segments_outside_live_window`` option in DASH_ options or HLS_
+options for details.)
 
-    Packager supports removing old segments automatically.
-    See ``preserved_segments_outside_live_window`` option in
-    DASH_ options or HLS_ options for details.
+With HTTP paths, this will be done using HTTP DELETE.
 
 Software tests
 ==============
@@ -140,10 +144,10 @@ Network timeouts
 libcurl_ can apply network timeout settings. However,
 we haven't addressed this yet.
 
-Miscellaneous
-=============
-- Address all things TODO and FIXME
-- Make ``io_cache_size`` configurable?
+TODO
+====
+- Upload chunks as they are ready instead of buffering whole segments in IOCache
+- Document AWS usage
 
 
 *******
@@ -212,6 +216,33 @@ Run Caddy::
     caddy -conf Caddyfile
 
 
+HTTP PUT file uploads to Google Cloud Storage
+=============================================
+Create an OAuth 2.0 token with access to Google Cloud Storage.  For testing
+purposes, you can use Google's `OAuth Playground`_ to generate a token with
+access to the ``https://www.googleapis.com/auth/devstorage.read_write`` API
+scope.
+
+Then add the Packager argument::
+
+    --http_upload_headers "Authorization: Bearer AUTH_TOKEN"
+
+Where ``AUTH_TOKEN`` is your OAuth 2.0 token for GCS.
+
+For live streams, you should also disable caching so that GCS does not serve a
+stale manifest.  For this, change the argument to::
+
+    --http_upload_headers "Authorization: Bearer AUTH_TOKEN\nCache-Control: no-store, no-transform"
+
+Where ``AUTH_TOKEN`` is your OAuth 2.0 token for GCS and ``\n`` is a literal
+newline.
+
+Finally, to upload to a bucket named BUCKET_NAME and a folder called
+FOLDER_PATH, use the URL
+``https://BUCKET_NAME.storage.googleapis.com/FOLDER_PATH`` as the base for
+Packager's outputs.
+
+
 *************************
 Development and debugging
 *************************
@@ -245,6 +276,7 @@ Have fun!
 .. _ngx_http_dav_module: http://nginx.org/en/docs/http/ngx_http_dav_module.html
 .. _Caddy: https://caddyserver.com/
 .. _httpd-reflector.py: https://gist.github.com/amotl/3ed38e461af743aeeade5a5a106c1296
+.. _OAuth Playground: https://developers.google.com/oauthplayground/
 
 .. _@colleenkhenry: https://github.com/colleenkhenry
 .. _@kqyang: https://github.com/kqyang

@@ -103,8 +103,16 @@ File* CreateHttpsFile(const char* file_name, const char* mode) {
   return new HttpFile(file_name, mode, true);
 }
 
+bool DeleteHttpsFile(const char* file_name) {
+  return HttpFile::Delete(file_name, true);
+}
+
 File* CreateHttpFile(const char* file_name, const char* mode) {
   return new HttpFile(file_name, mode, false);
+}
+
+bool DeleteHttpFile(const char* file_name) {
+  return HttpFile::Delete(file_name, false);
 }
 
 File* CreateMemoryFile(const char* file_name, const char* mode) {
@@ -126,8 +134,8 @@ static const FileTypeInfo kFileTypeInfo[] = {
     {kUdpFilePrefix, &CreateUdpFile, nullptr, nullptr},
     {kMemoryFilePrefix, &CreateMemoryFile, &DeleteMemoryFile, nullptr},
     {kCallbackFilePrefix, &CreateCallbackFile, nullptr, nullptr},
-    {kHttpFilePrefix, &CreateHttpFile, nullptr, nullptr},
-    {kHttpsFilePrefix, &CreateHttpsFile, nullptr, nullptr},
+    {kHttpFilePrefix, &CreateHttpFile, &DeleteHttpFile, nullptr},
+    {kHttpsFilePrefix, &CreateHttpsFile, &DeleteHttpsFile, nullptr},
 };
 
 base::StringPiece GetFileTypePrefix(base::StringPiece file_name) {
@@ -287,8 +295,10 @@ bool File::WriteFileAtomically(const char* file_name,
   // Provide a default implementation which may not be atomic unfortunately.
 
   // Skip the warning message for memory files, which is meant for testing
-  // anyway..
-  if (strncmp(file_name, kMemoryFilePrefix, strlen(kMemoryFilePrefix)) != 0) {
+  // anyway.  Also skip the message for HTTP files.
+  if (strncmp(file_name, kMemoryFilePrefix, strlen(kMemoryFilePrefix)) != 0 &&
+      strncmp(file_name, kHttpFilePrefix, strlen(kHttpFilePrefix)) != 0 &&
+      strncmp(file_name, kHttpsFilePrefix, strlen(kHttpsFilePrefix)) != 0) {
     LOG(WARNING) << "Writing to " << file_name
                  << " is not guaranteed to be atomic.";
   }
