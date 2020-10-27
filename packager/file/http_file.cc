@@ -200,10 +200,10 @@ Status HttpFile::Request(HttpMethod http_method,
 
   // Assume successful request
   Status status = Status::OK;
+  std::string method_text = method_as_text(http_method);
 
   // Handle request failure
   if (res != CURLE_OK) {
-    std::string method_text = method_as_text(http_method);
     std::string error_message = base::StringPrintf(
         "%s request for %s failed. Reason: %s.", method_text.c_str(),
         url.c_str(), curl_easy_strerror(res));
